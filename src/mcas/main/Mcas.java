@@ -5,6 +5,13 @@ package mcas.main;
 // Modification of this software for testing purposes is NOT AUTHORIZED by the
 // approval authority.
 
+/*
+* Clauses:
+* State.ACTIVE
+* !autopilotOn
+*
+* */
+
 public class Mcas
 {
     // Define enumerations for return values (commands)
@@ -88,8 +95,7 @@ public class Mcas
         // still too high and the necessary time has elapsed since our last trim
         // DOWN command) that we should send a trim DOWN command?
         // decision D6
-        if ((state == State.ACTIVE) && (angleOfAttack > AOA_THRESHOLD)
-                && timer.isExpired())
+        if ((state == State.ACTIVE) && (angleOfAttack > AOA_THRESHOLD) && timer.isExpired())
         {
             command = Command.DOWN;
             timer.set();
