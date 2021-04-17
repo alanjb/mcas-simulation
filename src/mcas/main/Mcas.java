@@ -5,13 +5,6 @@ package mcas.main;
 // Modification of this software for testing purposes is NOT AUTHORIZED by the
 // approval authority.
 
-/*
-* Clauses:
-* State.ACTIVE
-* !autopilotOn
-*
-* */
-
 public class Mcas
 {
     // Define enumerations for return values (commands)
@@ -43,6 +36,13 @@ public class Mcas
         timer = new McasTimer(ACTIVATION_INTERVAL_MS);
     }
 
+    //constructor to create an mcas object with a fake timer dependency
+    public Mcas(McasTimerFake t)
+    {
+        state = State.INACTIVE; // safest starting state
+        timer = new McasTimerFake(t.getTimeIntervalMs()); //defensive copy
+    }
+
     // Method to control trim
     public Command trim(boolean autopilotOn, boolean flapsDown, double angleOfAttack)
     {
@@ -54,6 +54,7 @@ public class Mcas
         // decision D1
         if ((state == State.INACTIVE) && !autopilotOn && !flapsDown)
         {
+            System.out.println("D1");
             state = State.ARMED;
         }
 
@@ -62,6 +63,7 @@ public class Mcas
         // decision D2
         if ((state == State.ARMED) && (autopilotOn || flapsDown))
         {
+            System.out.println("D2");
             state = State.INACTIVE;
         }
 
@@ -70,6 +72,7 @@ public class Mcas
         // decision D3
         if ((state == State.ARMED) && (angleOfAttack > AOA_THRESHOLD))
         {
+            System.out.println("D3");
             state = State.ACTIVE;
             command = Command.DOWN;
             timer.set();
@@ -80,6 +83,7 @@ public class Mcas
         // decision D4
         if ((state == State.ACTIVE) && (autopilotOn || flapsDown))
         {
+            System.out.println("D4");
             state = State.INACTIVE;
         }
 
@@ -88,6 +92,7 @@ public class Mcas
         // decision D5
         if ((state == State.ACTIVE) && (angleOfAttack <= AOA_THRESHOLD))
         {
+            System.out.println("D5");
             state = State.ARMED;
         }
 
@@ -95,8 +100,10 @@ public class Mcas
         // still too high and the necessary time has elapsed since our last trim
         // DOWN command) that we should send a trim DOWN command?
         // decision D6
+
         if ((state == State.ACTIVE) && (angleOfAttack > AOA_THRESHOLD) && timer.isExpired())
         {
+            System.out.println("D6");
             command = Command.DOWN;
             timer.set();
         }

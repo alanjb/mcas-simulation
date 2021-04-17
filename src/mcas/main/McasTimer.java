@@ -17,6 +17,10 @@ public class McasTimer
         this.timeIntervalMs = timeIntervalMs;
     }
 
+    public static McasTimerFake createFakeMcasTimer(Long time){
+        return new McasTimerFake(time);
+    }
+
     public void set()
     {
         // Set the timer to the current system time.
