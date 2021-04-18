@@ -2,66 +2,133 @@ import mcas.main.Mcas;
 import mcas.main.McasTimer;
 import mcas.main.McasTimerFake;
 import mcas.main.TestTimer;
+import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MCASTest {
 
     @Test
-    public void test_D3(){
-        /*
-         * TT
-         * TF
-         * FT
-         * */
+    public void test_1(){
+
+//        a	state == State.INACTIVE
+//        b	state == State.ARMED
+//        c	state == State.ACTIVE
+//        d	autopilotOn
+//        e	flapsDown
+//        f	angleOfAttack > AOA_THRESHOLD
+//        g	timer.isExpired ( )
 
         Mcas m = new Mcas();
 
+        //TFFFFFF
+        Mcas.Command command = m.trim(false, false, 2); //Covers T
 
+        assertEquals(m.getState(), Mcas.State.ARMED);
+        assertEquals(command, Mcas.Command.NONE);
+
+        //FTFTFFF
+        Mcas.Command command2 = m.trim(true, false, 2);
+        assertEquals(m.getState(), Mcas.State.INACTIVE);
+        assertEquals(command, Mcas.Command.NONE);
+    }
+
+    @Test
+    public void test_2(){
+//        a	state == State.INACTIVE
+//        b	state == State.ARMED
+//        c	state == State.ACTIVE
+//        d	autopilotOn
+//        e	flapsDown
+//        f	angleOfAttack > AOA_THRESHOLD
+//        g	timer.isExpired ( )
+
+        Mcas m = new Mcas();
+
+        //TFFFFTF
+        Mcas.Command command = m.trim(false, false, 22); //D1
+
+        assertEquals(m.getState(), Mcas.State.ARMED);
+        assertEquals(command, Mcas.Command.NONE);
+
+        //FTFFFTF
+        Mcas.Command command2 = m.trim(false, false, 22);//D3
+//
+////        assertEquals(m.getState(), Mcas.State.ACTIVE);
+////        assertEquals(command2, Mcas.Command.DOWN);
+//
+//        //FFTTFTF
+        Mcas.Command command3 = m.trim(true, false, 22);
 
     }
 
     @Test
-    public void test_D4(){
+    public void test_3(){
+//        a	state == State.INACTIVE
+//        b	state == State.ARMED
+//        c	state == State.ACTIVE
+//        d	autopilotOn
+//        e	flapsDown
+//        f	angleOfAttack > AOA_THRESHOLD
+//        g	timer.isExpired ( )
+
         Mcas m = new Mcas();
 
-        /*
-        * (TTT)
-        * (TTF)
-        * (TFT)
-        * TFF
-        * FTT
-        * FTF
-        * FFT
-        * */
+        //TFFFFTF
+        Mcas.Command command = m.trim(false, false, 22);
 
-        //FFF where INACTIVE, !autopilotOn && !flapsDown (starting point) to get to ARMED
-        m.trim(false, false, 22);
+        assertEquals(command, Mcas.Command.DOWN);
+        assertEquals(m.getState(), Mcas.State.ACTIVE);
 
-        //FFF where ARMED, !autopilotOn && !flapsDown to get to ACTIVE
-        m.trim(false, false, 22);
+        Mcas.Command command2 = m.trim(false, false, 5); // TT where ACTIVE, aoA <= Threshold - D5
 
-        //TTT, TFT; -- TTF where ACTIVE, autopilotOn,
-        m.trim(true, false, 22);
+        assertEquals(command2, Mcas.Command.NONE);
+        assertEquals(m.getState(), Mcas.State.ARMED);
+
     }
 
     @Test
-    public void test_D5(){
-        Mcas m = new Mcas();
+    public void test_4() throws InterruptedException { //FFTFTFTT
 
-        m.trim(false, false, 22); //FF where INACTIVE, aoA > Threshold
-        m.trim(false, false, 5); // TT where ACTIVE, aoA <= Threshold
-    }
+//        a	state == State.INACTIVE
+//        b	state == State.ARMED
+//        c	state == State.ACTIVE
+//        d	autopilotOn
+//        e	flapsDown
+//        f	angleOfAttack > AOA_THRESHOLD
+//        g	timer.isExpired ( )
 
-    @Test
-    public void test_D6(){
+
         //1. Reduce activation interval time, create a delay >= interval before isExpired() is called.
-        //2. call1 reaches D3 and calls timer.set(),
-        long time = 5;
+        //2. Reduce activation interval time, call1 reaches D3 and calls timer.set(), delay time for call2 and will reach isExpired and execute D6
+
+        //abcdefg
+        //FFTFTFTT
+
+        /*
+        * TTT
+        * TTF
+        * TFT
+        * FTT
+        * */
+        Mcas.Command command;
+        Mcas.Command command2;
+        long time = 500;
         McasTimerFake fakeTimer = McasTimer.createFakeMcasTimer(time);
         Mcas m = new Mcas(fakeTimer);
-        TestTimer t = new TestTimer(m);
 
-        m.trim(false, false, 25);
-        t.start();
+        command = m.trim(false, false, 25);
+
+        assertEquals(m.getState(), Mcas.State.ARMED);
+        assertEquals(command, Mcas.Command.DOWN);
+
+        Thread.sleep(5000);
+        command2 = m.trim(false, false, 25);
+
+        assertTrue(fakeTimer.isExpired());
+        assertEquals(m.getState(), Mcas.State.ACTIVE);
+        assertEquals(command2, Mcas.Command.DOWN);
     }
 }
