@@ -195,7 +195,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 		
 		// At start, state is INACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is expired (TFFFFTT)
+		// AOA is under threshold and timer is expired (TFFFFFT)
 		
 		// Initialize local variable to check returned command
 		Command command = Command.NONE;
@@ -212,11 +212,11 @@ public class MCASTest {
 		// Condition is now FTFFFFT:
  		// State is ARMED, autopilot is off, flaps are up,
 		// AOA is under threshold and timer is expired
-		// Test p3 with condition FTFFTFT (set flaps to down)
+		// Test p3 with condition FTFFFTT (set flaps to down)
 		command = Command.NONE;
-		command = mcas.trim(true, false, Mcas.AOA_THRESHOLD - 1.0);
-		assertEquals(Command.NONE, command);
-		assertEquals(State.ARMED, mcas.getState());
+		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
+		assertEquals(Command.DOWN, command);
+		assertEquals(State.ACTIVE, mcas.getState());
 	}	
 
 	
