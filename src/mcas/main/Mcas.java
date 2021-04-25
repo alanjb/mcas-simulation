@@ -100,7 +100,6 @@ public class Mcas
         // still too high and the necessary time has elapsed since our last trim
         // DOWN command) that we should send a trim DOWN command?
         // decision D6
-
         if ((state == State.ACTIVE) && (angleOfAttack > AOA_THRESHOLD) && timer.isExpired())
         {
             System.out.println("D6");
