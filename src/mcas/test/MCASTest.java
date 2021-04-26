@@ -182,8 +182,8 @@ public class MCASTest {
 	//
 	//  1. TFFFTFT	D1
 	//  2. TFFFFFT	D1
-	//  3. FTFTFTT	D2  fits D3 TR but not feasible for D3 b/c will become inactive at D2
-	//  4. FTFFTFT	D2  fits D3 TR but not feasible for D3 b/c will become inactive at D2
+	//  3. FTFTFTT	D2
+	//  4. FTFFTFT	D2
 	//  5. FTFFFTT	D3
 	//  6. FFTTFFT	D4
 	//  7. FFTFTFT	D4
@@ -195,6 +195,142 @@ public class MCASTest {
 
 	//	Note: Exactly one of the first 3 predicates (a, b, c) is always true.
 	
+	
+	//  1. TFFFTFT	D1
+
+	// Test p1 with condition TFFFTFT
+	@Test 
+	public void mcasTest_1_TFFFTFT() { 
+		
+		//	a: state == State.INACTIVE
+		//	b: state == State.ARMED
+		//	c: state == State.ACTIVE
+		//	d: autopilotOn
+		//	e: flapsDown
+		//	f: angleOfAttack > AOA_THRESHOLD
+		//	g: timer.isExpired ( )
+				
+		// Initialize local variable to check returned command
+		Command command = Command.NONE;
+
+		// After call to trim() method will still have TFFFTFT 
+		// (no command and state is INACTIVE)
+		// Call trim() with TFFFTFT
+		command = mcas.trim(false, true, Mcas.AOA_THRESHOLD - 1.0);
+		
+		// Check no command and state INACTIVE
+		assertEquals(Command.NONE, command);
+		assertEquals(State.INACTIVE, mcas.getState());
+	}	
+
+	
+	//  2. TFFFFFT	D1
+
+	// Test p1 with condition TFFFFFT
+	@Test 
+	public void mcasTest_2_TFFFFFT() { 
+		
+		//	a: state == State.INACTIVE
+		//	b: state == State.ARMED
+		//	c: state == State.ACTIVE
+		//	d: autopilotOn
+		//	e: flapsDown
+		//	f: angleOfAttack > AOA_THRESHOLD
+		//	g: timer.isExpired ( )
+		
+		// Initialize local variable to check returned command
+		Command command = Command.NONE;
+		
+		// After call to trim() method will have FTFFFFT 
+		// (no command and state is ARMED)
+		// Call trim() with TFFFFFT
+		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
+		
+		// Check no command and state ARMED
+		assertEquals(Command.NONE, command);
+		assertEquals(State.ARMED, mcas.getState());
+	}	
+
+	
+	//  3. FTFTFTT	D2
+
+	// Test p2 with condition FTFTFTT
+	@Test 
+	public void mcasTest_3_FTFTFTT() { 
+		
+		//	a: state == State.INACTIVE
+		//	b: state == State.ARMED
+		//	c: state == State.ACTIVE
+		//	d: autopilotOn
+		//	e: flapsDown
+		//	f: angleOfAttack > AOA_THRESHOLD
+		//	g: timer.isExpired ( )
+		
+		// Initialize local variable to check returned command
+		Command command = Command.NONE;
+
+		// After call to trim() method will have FTFFFFT 
+		// (no command and state is ARMED)
+		// Call trim with TFFFFFT
+		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
+		
+		// Check no command and state ARMED
+		assertEquals(Command.NONE, command);
+		assertEquals(State.ARMED, mcas.getState());
+				
+		// Condition is now FTFFFFT:
+ 		// Test p2 with condition FTFTFTT (set autopilot on, AOA > threshold)
+		// After call to trim() method will have TFFTFTT 
+		// (no command and state is INACTIVE)
+		// Call trim with FTFTFTT
+		command = Command.NONE;
+		command = mcas.trim(true, false, Mcas.AOA_THRESHOLD + 1.0);
+		
+		// Check no command and state INACTIVE
+		assertEquals(Command.NONE, command);
+		assertEquals(State.INACTIVE, mcas.getState());
+	}	
+
+	
+	//  4. FTFFTFT	D2
+
+	// Test p2 with condition FTFFTFT
+	@Test 
+	public void mcasTest_4_FTFFTFT() { 
+		
+		//	a: state == State.INACTIVE
+		//	b: state == State.ARMED
+		//	c: state == State.ACTIVE
+		//	d: autopilotOn
+		//	e: flapsDown
+		//	f: angleOfAttack > AOA_THRESHOLD
+		//	g: timer.isExpired ( )
+		
+		// Initialize local variable to check returned command
+		Command command = Command.NONE;
+
+		// After call to trim() method will have FTFFFFT 
+		// (no command and state is ARMED)
+		// Call trim with TFFFFFT
+		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
+		
+		// Check no command and state ARMED
+		assertEquals(Command.NONE, command);
+		assertEquals(State.ARMED, mcas.getState());
+				
+		// Condition is now FTFFFFT:
+		// Test p2 with condition FTFFTFT (set flaps to down)
+ 		// After call to trim() method will have TFFFTFT 
+		// (no command and state is INACTIVE)
+		// Call trim with FTFFTFT
+		command = Command.NONE;
+		command = mcas.trim(false, true, Mcas.AOA_THRESHOLD - 1.0);
+
+		// Check no command and state INACTIVE
+		assertEquals(Command.NONE, command);
+		assertEquals(State.INACTIVE, mcas.getState());
+	}	
+
 	
 	//  5. FTFFFTT	D3
 
@@ -230,7 +366,7 @@ public class MCASTest {
 		// Condition is now FTFFFFT:
  		// State is ARMED, autopilot is off, flaps are up,
 		// AOA is under threshold and timer is expired
-		// Test p3 with condition FTFFFTT (set flaps to down)
+		// Test p3 with condition FTFFFTT (set AOA > threshold)
 		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		assertEquals(Command.DOWN, command);
