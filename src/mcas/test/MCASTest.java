@@ -26,152 +26,7 @@ import static org.junit.Assert.assertTrue;
 
 public class MCASTest {
 
-    @Test
-    public void test_1(){
 
-//        a	state == State.INACTIVE
-//        b	state == State.ARMED
-//        c	state == State.ACTIVE
-//        d	autopilotOn
-//        e	flapsDown
-//        f	angleOfAttack > AOA_THRESHOLD
-//        g	timer.isExpired ( )
-
-        Mcas m = new Mcas();
-
-        //TFFFFFF
-        Mcas.Command command = m.trim(false, false, 2); //Covers T
-
-        assertEquals(m.getState(), Mcas.State.ARMED);
-        assertEquals(command, Mcas.Command.NONE);
-
-        //FTFTFFF
-        Mcas.Command command2 = m.trim(true, false, 2);
-        assertEquals(m.getState(), Mcas.State.INACTIVE);
-        assertEquals(command, Mcas.Command.NONE);
-    }
-
-    @Test
-    public void test_2(){
-    	
-//        a	state == State.INACTIVE
-//        b	state == State.ARMED
-//        c	state == State.ACTIVE
-//        d	autopilotOn
-//        e	flapsDown
-//        f	angleOfAttack > AOA_THRESHOLD
-//        g	timer.isExpired ( )
-
-        Mcas m = new Mcas();
-
-        //*** I think it's TFFFFTT 
-        //*** The timer is expired to start with until there is a DOWN command
-        //*** That would make the result ACTIVE and DOWN
-        //*** We could start with TFFFFFT to get to FTFFFTT
-        //*** I think we can only get timer not expired after a DOWN command 
-        //*** and so the state would be ACTIVE
-        
-       //TFFFFTF
-        Mcas.Command command = m.trim(false, false, 22); //D1 
-
-//*** to test my theory:
-//        assertEquals(m.getState(), Mcas.State.ACTIVE); //
-//        assertEquals(command, Mcas.Command.DOWN);
-//*** the above assertions passed
-        
-        assertEquals(m.getState(), Mcas.State.ARMED); //*** ACTIVE I think
-        assertEquals(command, Mcas.Command.NONE); //*** DOWN, I think
-
-        //FTFFFTF
-        Mcas.Command command2 = m.trim(false, false, 22);//D3
-//
-////        assertEquals(m.getState(), Mcas.State.ACTIVE);
-////        assertEquals(command2, Mcas.Command.DOWN);
-//
-//        //FFTTFTF
-        Mcas.Command command3 = m.trim(true, false, 22);
-
-    }
-
-    @Test
-    public void test_3(){
-    	
-//        a	state == State.INACTIVE
-//        b	state == State.ARMED
-//        c	state == State.ACTIVE
-//        d	autopilotOn
-//        e	flapsDown
-//        f	angleOfAttack > AOA_THRESHOLD
-//        g	timer.isExpired ( )
-
-        Mcas m = new Mcas();
-
-        //*** I think it's TFFFFTT 
-        //*** The timer is expired to start with until there is a DOWN command
-        
-        //TFFFFTF
-        Mcas.Command command = m.trim(false, false, 22);
-
-        assertEquals(command, Mcas.Command.DOWN);
-        assertEquals(m.getState(), Mcas.State.ACTIVE);
-
-        Mcas.Command command2 = m.trim(false, false, 5); // TT where ACTIVE, aoA <= Threshold - D5
-
-        assertEquals(command2, Mcas.Command.NONE);
-        assertEquals(m.getState(), Mcas.State.ARMED);
-
-    }
-
-    @Test
-    public void test_4() throws InterruptedException { //FFTFTFTT
-
-//        a	state == State.INACTIVE
-//        b	state == State.ARMED
-//        c	state == State.ACTIVE
-//        d	autopilotOn
-//        e	flapsDown
-//        f	angleOfAttack > AOA_THRESHOLD
-//        g	timer.isExpired ( )
-
-
-        //1. Reduce activation interval time, create a delay >= interval before isExpired() is called.
-        //2. Reduce activation interval time, call1 reaches D3 and calls timer.set(), delay time for 
-		  //   call2 and will reach isExpired and execute D6
-
-        //abcdefg
-        //FFTFTFTT
-
-        /*
-        * TTT
-        * TTF
-        * TFT
-        * FTT
-        * */
-        Mcas.Command command;
-        Mcas.Command command2;
-        long time = 500;
-//        McasTimerFake fakeTimer = McasTimer.createFakeMcasTimer(time);
-//        Mcas m = new Mcas(fakeTimer);
-           	McasTimer fakeTimer = new McasTimer(time);
-        	Mcas m = new Mcas();
-
-
-        command = m.trim(false, false, 25);
-
-//        assertEquals(m.getState(), Mcas.State.ARMED); //*** ACTIVE, I think
-        assertEquals(command, Mcas.Command.DOWN);
-
-        Thread.sleep(5000);
-        command2 = m.trim(false, false, 25);
-
-        assertTrue(fakeTimer.isExpired());
-        assertEquals(m.getState(), Mcas.State.ACTIVE);
-        assertEquals(command2, Mcas.Command.DOWN);
-    }
-
-
-// From Jason    
-    
 	Mcas mcas;
 	
 	@Before public void setUp() { 
@@ -198,7 +53,9 @@ public class MCASTest {
 	
 	//  1. TFFFTFT	D1
 
-	// Test p1 with condition TFFFTFT
+	// Test p1 with condition TFFFTFT 
+	// (state INACTIVE, autopilot off, flaps down,
+	// AOA under threshold, timer expired)
 	@Test 
 	public void mcasTest_1_TFFFTFT() { 
 		
@@ -210,12 +67,13 @@ public class MCASTest {
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
 				
-		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		// Declare local variable to check returned command
+		Command command;
 
 		// After call to trim() method will still have TFFFTFT 
 		// (no command and state is INACTIVE)
-		// Call trim() with TFFFTFT
+		// Call trim() with TFFFTFT (state INACTIVE, autopilot off, flaps down,
+		// AOA < threshold, timer expired)
 		command = mcas.trim(false, true, Mcas.AOA_THRESHOLD - 1.0);
 		
 		// Check no command and state INACTIVE
@@ -227,6 +85,8 @@ public class MCASTest {
 	//  2. TFFFFFT	D1
 
 	// Test p1 with condition TFFFFFT
+	// (state INACTIVE, autopilot off, flaps up,
+	// AOA under threshold, timer expired)
 	@Test 
 	public void mcasTest_2_TFFFFFT() { 
 		
@@ -238,8 +98,8 @@ public class MCASTest {
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
 		
-		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		// Declare local variable to check returned command
+		Command command;
 		
 		// After call to trim() method will have FTFFFFT 
 		// (no command and state is ARMED)
@@ -255,6 +115,8 @@ public class MCASTest {
 	//  3. FTFTFTT	D2
 
 	// Test p2 with condition FTFTFTT
+	// (state ARMED, autopilot on, flaps up,
+	// AOA over threshold, timer expired)
 	@Test 
 	public void mcasTest_3_FTFTFTT() { 
 		
@@ -266,8 +128,8 @@ public class MCASTest {
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
 		
-		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		// Declare local variable to check returned command
+		Command command;
 
 		// After call to trim() method will have FTFFFFT 
 		// (no command and state is ARMED)
@@ -283,7 +145,6 @@ public class MCASTest {
 		// After call to trim() method will have TFFTFTT 
 		// (no command and state is INACTIVE)
 		// Call trim with FTFTFTT
-		command = Command.NONE;
 		command = mcas.trim(true, false, Mcas.AOA_THRESHOLD + 1.0);
 		
 		// Check no command and state INACTIVE
@@ -295,6 +156,8 @@ public class MCASTest {
 	//  4. FTFFTFT	D2
 
 	// Test p2 with condition FTFFTFT
+	// (state ARMED, autopilot off, flaps down,
+	// AOA under threshold, timer expired)
 	@Test 
 	public void mcasTest_4_FTFFTFT() { 
 		
@@ -307,7 +170,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 		
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// After call to trim() method will have FTFFFFT 
 		// (no command and state is ARMED)
@@ -323,7 +186,6 @@ public class MCASTest {
  		// After call to trim() method will have TFFFTFT 
 		// (no command and state is INACTIVE)
 		// Call trim with FTFFTFT
-		command = Command.NONE;
 		command = mcas.trim(false, true, Mcas.AOA_THRESHOLD - 1.0);
 
 		// Check no command and state INACTIVE
@@ -334,9 +196,9 @@ public class MCASTest {
 	
 	//  5. FTFFFTT	D3
 
-	// Test p3 with condition FTFFFTT in which state is ACTIVE,
-	// autopilot is on, flaps are up, AOA is under threshold 
-	// and timer is expired
+	// Test p3 with condition FTFFFTT 	
+	// (state ARMED, autopilot off, flaps up,
+	// AOA over threshold, timer expired)
 	@Test 
 	public void mcasTest_5_FTFFFTT() { 
 		
@@ -352,7 +214,7 @@ public class MCASTest {
 		// AOA is under threshold and timer is expired (TFFFFFT)
 		
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// In initial call to trim() method), change state
 		// from INACTIVE to ARMED
@@ -367,7 +229,6 @@ public class MCASTest {
  		// State is ARMED, autopilot is off, flaps are up,
 		// AOA is under threshold and timer is expired
 		// Test p3 with condition FTFFFTT (set AOA > threshold)
-		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		assertEquals(Command.DOWN, command);
 		assertEquals(State.ACTIVE, mcas.getState());
@@ -376,9 +237,9 @@ public class MCASTest {
 	
 	//  6. FFTTFFT	D4
 
-	// Test p4 with condition FFTTFFT in which state is ACTIVE,
-	// autopilot is on, flaps are up, AOA is under threshold 
-	// and timer is expired
+	// Test p4 with condition FFTTFFT 
+	// (state ACTIVE, autopilot on, flaps down,
+	// AOA under threshold, timer expired)
 	@Test 
 	public void mcasTest_6_FFTTFFT() {
 		
@@ -394,7 +255,7 @@ public class MCASTest {
 		// AOA is over threshold and timer is expired (TFFFFTT)
 		
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// In one call to trim() method), change state
 		// from INACTIVE to ARMED and then to ACTIVE
@@ -416,7 +277,6 @@ public class MCASTest {
  		// State is ACTIVE, autopilot is off, flaps are up,
 		// AOA is under threshold and timer is expired
 		// Test p4 with condition FFTTFFT (set autopilot to on, AOA < threshold)
-		command = Command.NONE;
 		command = mcas.trim(true, false, Mcas.AOA_THRESHOLD - 1.0);
 		assertEquals(Command.NONE, command);
 		assertEquals(State.INACTIVE, mcas.getState());
@@ -444,7 +304,7 @@ public class MCASTest {
 		// AOA is over threshold and timer is expired (TFFFFTT)
 		
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// In one call to trim() method), change state
 		// from INACTIVE to ARMED and then to ACTIVE
@@ -466,7 +326,6 @@ public class MCASTest {
  		// State is ACTIVE, autopilot is off, flaps are down,
 		// AOA is under threshold and timer is expired
 		// Test p4 with condition FFTFTFT (set autopilot to off, flaps to down, AOA < threshold)
-		command = Command.NONE;
 		command = mcas.trim(false, true, Mcas.AOA_THRESHOLD - 1.0);
 		assertEquals(Command.NONE, command);
 		assertEquals(State.INACTIVE, mcas.getState());
@@ -536,22 +395,21 @@ public class MCASTest {
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
 
-		// At start, state is INACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is expired (TFFFFTT)
-		
 		// Initialize local variable to check returned command
 		Command command = Command.NONE;
 
-		// In one call to trim() method), change state
-		// from INACTIVE to ARMED and then to ACTIVE
-		// Start with TFFFFTT (state is INACTIVE) 
+		// After call to trim() method will have FFTFFTF 
+		// (DOWN command and state is ACTIVE)
 		// After D1 will have FTFFFTT (state is ARMED)
-		// After D3 will have FFTFFTF (state is ACTIVE timer is not expired)
+		// After D3 will have FFTFFTF (state is ACTIVE, timer is not expired)
+		// Call trim() with TFFFFTT
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		
-		// Check state
+		// Check DOWN command and state ACTIVE
+		assertEquals(Command.DOWN, command);
 		assertEquals(State.ACTIVE, mcas.getState());
-				
+		
+		// Condition is now FFTFFTF		
 		// wait longer than fake interval for timer to expire
 		try {
 			Thread.sleep(McasTimer.FAKE_INTERVAL + 10); // wait (in milliseconds)
@@ -559,21 +417,20 @@ public class MCASTest {
 			System.err.println("Caught InterruptedException: " + e.getMessage());};
 			
 		// Condition is now FFTFFTT:
- 		// State is ACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is expired
-		// Test p1, p4, p6 with this condition
+		// Test p1, p4, p6 with FFTFFTT
+		// Call trim() with FFTFFTT
 		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
+
+		// Check DOWN command and state ACTIVE
 		assertEquals(Command.DOWN, command);
 		assertEquals(State.ACTIVE, mcas.getState());
 	}	
 	
 	
-	// 10. FFTFFTF	D56
+	// 10. FFTFFTF	D5, D6
 
-	// Test p5 and p6 with condition FFTFFTF in which state is ACTIVE,
-	// autopilot is off, flaps are up, AOA is over threshold 
-	// and timer is not expired
+	// Test p5 and p6 with condition FFTFFTF
 	@Test 
 	public void mcasTest_10_FFTFFTF() {
 		
@@ -585,38 +442,35 @@ public class MCASTest {
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
 		
-		// At start, state is INACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is expired (TFFFFTT)
-		
 		// Initialize local variable to check returned command
 		Command command = Command.NONE;
 
-		// In one call to trim() method), change state
-		// from INACTIVE to ARMED and then to ACTIVE
-		// Start with TFFFFTT (state is INACTIVE) 
+		// After call to trim() method will have FFTFFTF 
+		// (DOWN command and state is ACTIVE)
 		// After D1 will have FTFFFTT (state is ARMED)
-		// After D3 will have FFTFFTF (state is ACTIVE timer is not expired)
+		// After D3 will have FFTFFTF (state is ACTIVE, timer is not expired)
+		// Call trim() with TFFFFTT
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		
-		// Check state
+		// Check DOWN command and state ACTIVE
+		assertEquals(Command.DOWN, command);
 		assertEquals(State.ACTIVE, mcas.getState());
 
-		// Condition is now FFTFFTF:
- 		// State is ACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is not expired
-		// Test p5, p6 with this condition
+		// Condition is now FFTFFTF
+		// Test p5, p6 with FFTFFTF
+		// Call trim() with FFTFFTF
 		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
+		
+		// Check no command and state ARMED
 		assertEquals(Command.NONE, command);
 		assertEquals(State.ACTIVE, mcas.getState());
 	}
 	
 	
-	// 11. FFTFFFT	D56
+	// 11. FFTFFFT	D5, D6
 
-	// Test p5 and p6 with condition FFTFFFT in which state is ACTIVE,
-	// autopilot is off, flaps are up, AOA is under threshold 
-	// and timer is expired
+	// Test p5 and p6 with condition FFTFFFT
 	@Test 
 	public void mcasTest_11_FFTFFFT() {
 		
@@ -627,45 +481,45 @@ public class MCASTest {
 		//	e: flapsDown
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
-		
-		// At start, state is INACTIVE, autopilot is off, flaps are up,
-		// AOA is over threshold and timer is expired (TFFFFTT)
-		
+				
 		// Initialize local variable to check returned command
 		Command command = Command.NONE;
-
-		// In one call to trim() method), change state
-		// from INACTIVE to ARMED and then to ACTIVE
-		// Start with TFFFFTT (state is INACTIVE) 
-		// After D1 will have FTFFFTT (state is ARMED)
-		// After D3 will have FFTFFTF (state is ACTIVE timer is not expired)
+		
+		// After call to trim() method will have FFTFFTF 
+		// (DOWN command and state is ACTIVE)
+ 		// After D1 will have FTFFFTT (state is ARMED)
+		// After D3 will have FFTFFTF (state is ACTIVE, timer is not expired)
+		// Call trim() with TFFFFTT
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		
-		// Check state
+		// Check DOWN command and state ACTIVE
+		assertEquals(Command.DOWN, command);
 		assertEquals(State.ACTIVE, mcas.getState());
 				
+		// Condition is now FFTFFTF
 		// wait longer than fake interval for timer to expire
 		try {
 			Thread.sleep(McasTimer.FAKE_INTERVAL + 10); // wait (in milliseconds)
 		} catch (InterruptedException e) { 
 			System.err.println("Caught InterruptedException: " + e.getMessage());};
 			
-		// Condition is now FFTFFTT:
- 		// State is ACTIVE, autopilot is off, flaps are down,
-		// AOA is under threshold and timer is expired
-		// Test p5, p6 with condition FFTFFFT (set AOA < threshold)
+		// Condition is now FFTFFTT
+			
+		// After call to trim() method will have FTFFFFT 
+		// (no command and state is ARMED)
+	 	// Call trim() with FFTFFFT
 		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
+		
+		// Check no command and state ARMED
 		assertEquals(Command.NONE, command);
 		assertEquals(State.ARMED, mcas.getState());
 	}	
 	
 
-	// 12. TFFTFTT	D12346
+	// 12. TFFTFTT	D1, D2, D3, D4, D6
 	
-	// Test p1, p2, p3, p4 and p6 with condition FFTFFTT, in which state is ACTIVE,
-	// autopilot is off, flaps are up, AOA is over threshold 
-	// and timer is expired
+	// Test p1, p2, p3, p4 and p6 with condition TFFTFTT
 	@Test 
 	public void mcasTest_12_TFFTFTT() { // conditions persist for D1-D6
 		
@@ -676,20 +530,19 @@ public class MCASTest {
 		//	e: flapsDown
 		//	f: angleOfAttack > AOA_THRESHOLD
 		//	g: timer.isExpired ( )
-		
-		// At start, state is INACTIVE, autopilot is on, flaps are up,
-		// AOA is over threshold and timer is expired (TFFTFTT)
-		
+				
 		// Initialize local variable to check returned command
 		Command command = Command.NONE;
 
-		// Start with TFFTFTT 
-		// Conditions persist for D1-D6
+		// After call to trim() method will still have TFFFTFT 
+		// (no command and state is INACTIVE)
+		// Call trim() with TFFFTFT
 		command = mcas.trim(true, false, Mcas.AOA_THRESHOLD + 1.0);
 		
-		// Check state
-		assertEquals(State.INACTIVE, mcas.getState());
+		// Check no command and state INACTIVE
 		assertEquals(Command.NONE, command);
+		assertEquals(State.INACTIVE, mcas.getState());
 	}
 
 }
+
