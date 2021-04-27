@@ -336,15 +336,14 @@ public class MCASTest {
 		// At start, state is INACTIVE, autopilot is off, flaps are up,
 		// AOA is under threshold and timer is expired (TFFFFFT)
 		
-		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		// Declare local variable to check returned command
+		Command command;
 
 		// In initial call to trim() method, change state
 		// from INACTIVE to ARMED and then to ACTIVE
 		// Start with TFFFFFT (state is INACTIVE) 
 		// After D1 will have FTFFFFT (state is ARMED)
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
-		//  
 		
 		// Check state
 		assertEquals(State.ARMED, mcas.getState());
@@ -354,7 +353,6 @@ public class MCASTest {
  		// State is ACTIVE, autopilot is off, flaps are UP,
 		// AOA is under threshold and timer is expired
 		// Test p2, p3, p5 with condition FFTFTFT (set autopilot to off, flaps to up, AOA < threshold)
-		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
 		assertEquals(Command.NONE, command);
 		assertEquals(State.ARMED, mcas.getState());
@@ -379,7 +377,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// After call to trim() method will have FFTFFTF 
 		// (DOWN command and state is ACTIVE)
@@ -402,7 +400,6 @@ public class MCASTest {
 		// Condition is now FFTFFTT:
 		// Test p1, p4, p6 with FFTFFTT
 		// Call trim() with FFTFFTT
-		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 
 		// Check DOWN command and state ACTIVE
@@ -426,7 +423,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 		
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// After call to trim() method will have FFTFFTF 
 		// (DOWN command and state is ACTIVE)
@@ -442,7 +439,6 @@ public class MCASTest {
 		// Condition is now FFTFFTF
 		// Test p5, p6 with FFTFFTF
 		// Call trim() with FFTFFTF
-		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD + 1.0);
 		
 		// Check no command and state ARMED
@@ -466,7 +462,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 				
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 		
 		// After call to trim() method will have FFTFFTF 
 		// (DOWN command and state is ACTIVE)
@@ -491,7 +487,6 @@ public class MCASTest {
 		// After call to trim() method will have FTFFFFT 
 		// (no command and state is ARMED)
 	 	// Call trim() with FFTFFFT
-		command = Command.NONE;
 		command = mcas.trim(false, false, Mcas.AOA_THRESHOLD - 1.0);
 		
 		// Check no command and state ARMED
@@ -515,7 +510,7 @@ public class MCASTest {
 		//	g: timer.isExpired ( )
 				
 		// Initialize local variable to check returned command
-		Command command = Command.NONE;
+		Command command;
 
 		// After call to trim() method will still have TFFFTFT 
 		// (no command and state is INACTIVE)
