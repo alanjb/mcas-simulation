@@ -2,6 +2,9 @@ package mcas.main;
 
 public class McasTimer
 {
+    // Fake activation interval in ms
+    public static final long FAKE_INTERVAL = 500; // ms
+
     // Declare member variables
     private long lastSetTimeMs;
     private long timeIntervalMs;
@@ -14,11 +17,7 @@ public class McasTimer
         // expired state (that is, an initial call to
         // isExpired() will return TRUE.
         lastSetTimeMs = 0;
-        this.timeIntervalMs = timeIntervalMs;
-    }
-
-    public static McasTimerFake createFakeMcasTimer(Long time){
-        return new McasTimerFake(time);
+        this.timeIntervalMs = 2000; // Modified. Original code: timeIntervalMs;
     }
 
     public void set()
@@ -34,6 +33,10 @@ public class McasTimer
         // return FALSE. Note that an initial call to
         // isExpired() without first calling set() will
         // return TRUE.
-        return System.currentTimeMillis() >= (lastSetTimeMs + timeIntervalMs);
+        return System.currentTimeMillis() >= (lastSetTimeMs + FAKE_INTERVAL);
+    }
+
+    public long getFakeInterval() {
+        return FAKE_INTERVAL;
     }
 }
