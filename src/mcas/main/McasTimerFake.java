@@ -10,6 +10,7 @@ public class McasTimerFake extends McasTimer {
         this.interval = timeIntervalMs;
     }
 
+    // time interval
     public long getTimeIntervalMs(){
         return this.interval;
     }
